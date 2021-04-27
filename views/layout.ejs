@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="./css/styles.css">
+  <title>Weclome to Stonkhub</title>
+</head>
+<body>
+
+
+    <a href="/">home</a>
+    <br>
+        <nav>
+      <% if(typeof(user) !== "undefined"){ %>
+        <% if(user){ %>
+        <a id="logoutbar" href="/user/logout">Log Out</a>
+        <br>
+        <br>
+
+        <a class="accountnav" href="/account/dashboard">Personal Dashboard</a>
+        <a class="accountnav" href="/account/placetrade">Place a Trade</a>
+        <% } %>
+        <% } else{ %>
+
+            <a href="/user/login">Login</a>
+            <a href="/user/signup">Signup</a>
+            <h4>Hello and Welcome to Stonkhub. </h> 
+            <%}%>
+        </nav>
+  <main>
+    <% if(typeof(optionalMessage)!== "undefined"){%>
+      <% if(optionalMessage){%>
+  
+  <h3 id="message"><%=optionalMessage%></h3>
+  <% }} %>
+    <%- body %>
+    <!-- <div class="demo_wrap">
+      <img src="/images/moneyprinter.jpg">
+    </div> -->
+  </main>
+</body>
+</html>

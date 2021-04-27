@@ -1,0 +1,80 @@
+<link rel="stylesheet" href="../css/styles.css">
+
+<div>
+<h3>Cash Balance: $<%=user.cashvalue %></h3>
+  <h3>Current Holdings:</h3>
+
+
+<table>
+  <tr>
+    <th>Ticker</th>
+    <th># Shares</th>
+    <th>Latest Price</th>
+    <th>Position Value</th>
+    <th>Last Updated At</th>
+  </tr>
+
+<% user_holdings.forEach(element => { %>
+
+  <% let holding_amt = parseFloat(element.latest_price) * parseFloat(element.holding_size) %>
+<tr>
+    <td><%= element.ticker %></td>
+    <td><%= element.holding_size %></td>  
+    <td><%= element.latest_price %></td>  
+    <td><%= holding_amt  %> </td>
+
+    <td><%= element.updatedAt %></td>  
+
+</tr>
+<% }); %>
+</table>
+</div>
+<div>
+<h3>Transactions</h3>
+
+<table>
+  <tr>
+    <th>Ticker</th>
+    <th>Buy or Sell</th>
+    <th>Tx Price</th>
+    <th>Number of Shares</th>
+    <th>Dollar Amt</th>
+    <th>Tx Timestamp</th>
+  </tr>
+
+<% user_transactions.forEach(element => { %>
+  <%if(!element.comment){%>
+<tr>
+    
+  <% let amt = parseFloat(element.tx_price) * parseFloat(element.tx_qty) %>
+    <td><%= element.ticker %></td>
+    <td><%= element.buy_or_sell %></td>  
+    <td><%= element.tx_price %></td>  
+    <td><%= element.tx_qty %></td>  
+    <td> <%= amt %></td>
+    <td><%= element.updatedAt %></td>  
+
+</tr>
+<%}else{%>
+  <td colspan=5><%=element.comment%></td>
+  <td ><%=element.updatedAt%></td>
+<% }}); %>
+</table>
+</div>
+
+
+<!--  
+
+
+-1. Auth is completed
+0. holding + transaction backend is done
+  *User can enter buy and sell transactions
+  *Available cash balance is updated, shares are added
+
+1. get dashboard formatted properly 
+ * Format nicely
+ 
+
+
+
+-->

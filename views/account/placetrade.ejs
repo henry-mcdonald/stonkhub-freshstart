@@ -1,0 +1,37 @@
+<link rel="stylesheet" href="../css/styles.css">
+
+<h3>Cash Balance: $<%=user.cashvalue %></h3>
+
+<form action="/account/placetrade" method="POST">
+    <label for="ticker">Ticker</label>
+    <input type="text" id="ticker" name="ticker">
+
+    <label for="quantity">Quantity</label>
+    <input type="text" id="quantity" name="quantity">
+    <input type="submit" value="Place Trade">
+
+    <input type="radio" id="Buy"
+    name="ordertype" value="Buy">
+   <label for="Buy">Buy</label>
+
+   <input type="radio" id="Sell"
+    name="ordertype" value="Sell">
+   <label for="Sell">Sell</label>
+
+</form>
+<br>
+<br>
+
+<br>
+<br>
+
+<form action="/account/addcomment" method="POST">
+    <label for="comment">Add Comment</label>
+    <textarea id="comment" name="comment"></textarea>
+
+ <input type="submit" value="Add">
+</form>
+
+<h4><% if(typeof(message) !== "undefined"){ %>
+<%= message %>
+<% } %></h4> 
