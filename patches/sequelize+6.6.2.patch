@@ -1,5 +1,5 @@
 diff --git a/node_modules/sequelize/lib/sequelize.js b/node_modules/sequelize/lib/sequelize.js
-index b074bee..cf1cd38 100644
+index b074bee..64f56e0 100644
 --- a/node_modules/sequelize/lib/sequelize.js
 +++ b/node_modules/sequelize/lib/sequelize.js
 @@ -1,5 +1,4 @@
@@ -31,7 +31,7 @@ index b074bee..cf1cd38 100644
 +      console.log(Object.values(arguments))
 +
 +      const argumentsChanged = Object.values(arguments[1])
-+      const urlParts = url.parse(argumentsChanged[0], true);
++      const urlParts = url.parse(process.env[argumentsChanged[0]], true);
 +      console.log("now to here")
 +      console.log(urlParts)
  
