@@ -1,10 +1,11 @@
+require('dotenv').config()
+
 const express = require('express')
 const ejsLayouts = require('express-ejs-layouts')
 const rowdy = require('rowdy-logger')
 const axios = require('axios')
 const models = require('./models')
 const cookieParser = require('cookie-parser')
-require('dotenv').config()
 var AES = require("crypto-js/aes");
 var CryptoJS = require("crypto-js")
 
