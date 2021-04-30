@@ -1,4 +1,8 @@
 'use strict';
+console.log("users relation is getting created/n/n/n/n/n/n/n/n/n/n/n/")
+console.log("users relation is getting created/n/n/n/n/n/n/n/n/n/n/n/")
+console.log("users relation is getting created/n/n/n/n/n/n/n/n/n/n/n/")
+console.log("users relation is getting created/n/n/n/n/n/n/n/n/n/n/n/")
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('users', {
