@@ -3,6 +3,9 @@ const SECRET_STRING = process.env.SECRET_STRING
 const AES = require("crypto-js/aes");
 const CryptoJS = require("crypto-js")
 const models = require('../models')
+const User = require('../models/user.js')
+const Holding = require('../models/holding.js')
+const Transaction = require('../models/transaction.js')
 
 
 
@@ -36,8 +39,8 @@ router.get('/signup', (req, res) => {
 
 router.post('/signup', async(req, res,next) => {
     const attemptedEmail = req.body.email
-    const checkIfExists = await models.user.findOne({
-        where: {email:attemptedEmail}
+    const checkIfExists = await User.findOne({
+        email:attemptedEmail
     })
     if(checkIfExists){
         res.redirect('signup')
@@ -45,12 +48,13 @@ router.post('/signup', async(req, res,next) => {
     }
 
 
-    const newUser = await models.user.create({
+    const newUser = new User({
         email: req.body.email,
         hashedpassword: req.body.hashedpassword,
         //accountvalue: initial_acct_value,
         cashvalue: initial_acct_value
     })
+    await newUser.save()
     const userString = newUser.id.toString()
     const encryptedUserId = AES.encrypt(userString,SECRET_STRING).toString()
     res.cookie('encryptedUserId', encryptedUserId)
@@ -61,8 +65,8 @@ router.post('/signup', async(req, res,next) => {
 router.post('/login', async(req, res) => {
     // res.send('you just submitted a login form')
     // look up the user who has the incoming email
-    const user = await models.user.findOne({
-            where: { email: req.body.email }
+    const user = await User.findOne({
+            email: req.body.email 
         })
         // check if that user's password matches the incoming password
     if(user){
@@ -99,11 +103,8 @@ router.get('/dangerzone', (req,res) => {
 router.get('/deleteaccount', async(req,res)=>{
     const decrypted = AES.decrypt(req.cookies.encryptedUserId, SECRET_STRING)
     const plaintext = decrypted.toString(CryptoJS.enc.Utf8)
-    const user = await models.user.findByPk(plaintext)
-    const userToDestroy = await models.user.findOne({
-        where: {id: user.id}
-    })
-    const deletedUser = await userToDestroy.destroy(); 
+    const user = await User.findByIdAndDelete(plaintext)
+
     res.clearCookie('encryptedUserId')
 
     res.render('index',{optionalMessage:"Your account has been deleted"})
@@ -112,7 +113,7 @@ router.get('/deleteaccount', async(req,res)=>{
 router.get('/editprofile', async(req,res)=>{
     const decrypted = AES.decrypt(req.cookies.encryptedUserId, SECRET_STRING)
     const plaintext = decrypted.toString(CryptoJS.enc.Utf8)
-    const user = await models.user.findByPk(plaintext)
+    const user = await User.findById(plaintext)
     console.log('edit profile screen should be rendered')
     res.render('user/editprofile',{user})
 })
@@ -120,13 +121,13 @@ router.get('/editprofile', async(req,res)=>{
 router.post('/editprofile', async(req,res)=>{
     const decrypted = AES.decrypt(req.cookies.encryptedUserId, SECRET_STRING)
     const plaintext = decrypted.toString(CryptoJS.enc.Utf8)
-    const user = await models.user.findByPk(plaintext)
+    const user = await User.findById(plaintext)
 
     const newProfile = req.body.profile
     
-    const updateUser = await user.update({
-        profile:newProfile
-    })
+
+    user.profile = newProfile
+    await user.save()
     res.render('user/editprofile',{user:user,optionalMessage:"Profile Updated"})
 })
 

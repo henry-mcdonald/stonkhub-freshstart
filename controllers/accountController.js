@@ -5,6 +5,9 @@ const axios = require('axios')
 const AES = require("crypto-js/aes");
 const CryptoJS = require("crypto-js")
 const models = require('../models')
+const User = require('../models/user.js')
+const Holding = require('../models/holding.js')
+const Transaction = require('../models/transaction.js')
 
 
 const API_KEY = process.env.API_KEY
@@ -22,35 +25,35 @@ const SECRET_STRING = process.env.SECRET_STRING
 //     next()
 // })
 
-router.get('/dashboard', async(req, res) => {
+router.get('/dashboard', async (req, res) => {
     console.log("dashboard should be rendereds")
-    
+
     const decrypted = AES.decrypt(req.cookies.encryptedUserId, SECRET_STRING)
     const plaintext = decrypted.toString(CryptoJS.enc.Utf8)
-    const user = await models.user.findByPk(plaintext)
+    const user = await User.findById(plaintext)
 
-    let user_holdings = await models.holding.findAll({
-        where: {user_id: user.id}
+    let user_holdings = await Holding.find({
+        user_id: user.id
     })
-    let user_transactions = await models.transaction.findAll({
-        where: {user_id: user.id}
+    let user_transactions = await Transaction.find({
+        user_id: user.id
     })
     //res.send(user_transactions)
     res.render('account/dashboard', {
         user: user,
-        user_holdings:user_holdings,
-        user_transactions:user_transactions
+        user_holdings: user_holdings,
+        user_transactions: user_transactions
     })
 
 
 })
 
-router.get('/placetrade', async(req, res) => {
+router.get('/placetrade', async (req, res) => {
     console.log("trading window should be rendereds")
     const decrypted = AES.decrypt(req.cookies.encryptedUserId, SECRET_STRING)
     const plaintext = decrypted.toString(CryptoJS.enc.Utf8)
-    const user = await models.user.findByPk(plaintext)
-    res.render('account/placetrade',{user:user})
+    const user = await User.findById(plaintext)
+    res.render('account/placetrade', { user: user })
 
 })
 
@@ -58,7 +61,7 @@ router.post('/placetrade', async (req, res) => {
 
     const decrypted = AES.decrypt(req.cookies.encryptedUserId, SECRET_STRING)
     const plaintext = decrypted.toString(CryptoJS.enc.Utf8)
-    const user = await models.user.findByPk(plaintext)
+    const user = await User.findById(plaintext)
 
     console.log("this should place a trade")
     console.log("tx table should be appended and user table + holdings table should be updated")
@@ -66,12 +69,13 @@ router.post('/placetrade', async (req, res) => {
     const qty = req.body.quantity
     const orderType = req.body.ordertype
     let signedqty
-    let transactionIsValid = true 
+    let transactionIsValid = true
     let tradeMessage
 
-    const holding = await models.holding.findOne({
-        where: { user_id: user.id, ticker: ticker }
+    const holding = await Holding.findOne({
+        user_id: user.id, ticker: ticker
     })
+    console.log("we found a holding, it's" ,holding)
 
     //If order is a buy, then check to see if cash is available. 
     // If order is a sell, check to see if shares are available
@@ -84,30 +88,30 @@ router.post('/placetrade', async (req, res) => {
     catch (err) {
         console.log(err)
     }
-    if(!price){
-       tradeMessage = `trade has been received for ${qty} shares of ${ticker} but could not be executed due to an unsupported ticker or issue with our data vendor. Please contact support with any inquiries.`
+    if (!price) {
+        tradeMessage = `trade has been received for ${qty} shares of ${ticker} but could not be executed due to an unsupported ticker or issue with our data vendor. Please contact support with any inquiries.`
         transactionIsValid = false
     }
 
     if (orderType === "Buy") {
         signedqty = qty
-        const cashNeeded = price*qty
-        if(cashNeeded > user.cashvalue){
+        const cashNeeded = price * qty
+        if (cashNeeded > user.cashvalue) {
             transactionIsValid = false
             tradeMessage = `$${cashNeeded} but only ${user.cashvalue} available`
         }
     } else if (orderType === "Sell") {
         signedqty = -1 * qty
-        if(!holding || qty>holding.holding_size){
+        if (!holding || qty > holding.holding_size) {
             transactionIsValid = false
             tradeMessage = "not enough shares to execute this sell order"
         }
     }
-    if(isNaN(qty)){
+    if (isNaN(qty)) {
         transactionIsValid = false
         tradeMessage = "please enter a numerical share count!"
     }
-    if(qty<0){
+    if (qty < 0) {
         transactionIsValid = false
         tradeMessage = "please enter a positive share count!"
     }
@@ -117,57 +121,62 @@ router.post('/placetrade', async (req, res) => {
     const costOfTransaction = price * signedqty
 
     if (transactionIsValid) {
-        const appendTx = await models.transaction.create({
+        console.log("transaction is valid, and qty is ", qty)
+        const appendTx = new Transaction({
             user_id: user.id,
             ticker: ticker,
             buy_or_sell: orderType,
             tx_price: price,
             tx_qty: qty
         })
+        console.log("transaction has been saved with ",qty, "of quantity!")
+        await appendTx.save()
 
 
-        if (!holding) {
+        if (!holding ) {
 
-            const newHolding = await models.holding.create({
+            const newHolding = new Holding({
                 user_id: user.id,
                 ticker: ticker,
                 latest_price: price,
                 holding_size: signedqty
             })
+            await newHolding.save()
         } else {
-            const updatedHolding = await holding.update({
-                holding_size: parseFloat(holding.holding_size) + parseFloat(signedqty),
-                latest_price: price
-            })
+            holding.holding_size = parseFloat(holding.holding_size) + parseFloat(signedqty)
+            holding.latest_price = price
+            await holding.save()
+
 
         }
 
-        const updateUser = await user.update({
-            cashvalue: user.cashvalue - costOfTransaction
-        })
+        user.cashvalue = user.cashvalue - costOfTransaction
 
-    tradeMessage = `Your ${orderType} order was entered for ${qty} shares of ${ticker} at price $${price}`
+        await user.save()
 
-    } 
+        tradeMessage = `Your ${orderType} order was entered for ${qty} shares of ${ticker} at price $${price}`
+
+    }
 
     console.log(holding)
 
 
 
-    res.render('account/placetrade', { message: tradeMessage , user:user})
+    res.render('account/placetrade', { message: tradeMessage, user: user })
 })
 
-router.post('/addcomment',async(req,res)=>{
+router.post('/addcomment', async (req, res) => {
     const decrypted = AES.decrypt(req.cookies.encryptedUserId, SECRET_STRING)
     const plaintext = decrypted.toString(CryptoJS.enc.Utf8)
-    const user = await models.user.findByPk(plaintext)
-    res.render('account/placetrade',{user:user,message:"comment added!"})
+    const user = await User.findbyId(plaintext)
+    res.render('account/placetrade', { user: user, message: "comment added!" })
 
-    const appendTx = await models.transaction.create({
+    const appendTx = new Transaction({
         user_id: user.id,
-        comment:req.body.comment
+        comment: req.body.comment
     })
-        
+    await appendTx.save()
+
 })
 
 

@@ -8,7 +8,6 @@
     "start": "node server.js",
     "sequelize": "dotenv sequelize",
     "postinstall": "patch-package"
-
   },
   "repository": {
     "type": "git",
@@ -29,6 +28,7 @@
     "ejs": "^3.1.6",
     "express": "^4.17.1",
     "express-ejs-layouts": "^2.5.0",
+    "mongoose": "^5.12.7",
     "morgan": "^1.10.0",
     "patch-package": "^6.4.7",
     "pg": "^8.5.1",
